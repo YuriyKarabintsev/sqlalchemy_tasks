@@ -7,9 +7,15 @@
                     href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css"
                     integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1"
                     crossorigin="anonymous">
+        <link rel="stylesheet" href="../static/css/main.css">
     </head>
     <body>
-        <h1>Миссия Колонизация Марса <span class="badge bg-secondary">Mars One</span></h1>
+        <header>
+        <h1><a href="/">Миссия Колонизация Марса</a> <span class="badge bg-secondary">Mars One</span></h1>
+            {% if current_user.is_authenticated %}
+                <a class="navbar-brand" href="/logout">{{ current_user.name }} {{ current_user.surname }}</a>
+            {% endif %}
+            </header>
         <h4><span class="placeholder col-12 bg-secondary">И на Марсе будут яблони цвести!</span></h4>
         <main role="main" class="container">
         {% block content %}{% endblock %}

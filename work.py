@@ -1,12 +1,13 @@
 import flask
+import flask_login
 from flask import Flask
-from flask import render_template
+from flask import render_template, request
 from loginform import LoginForm
 from jobsform import JobsForm
 from userform import UserForm
 from data.users import User
 from data import db_session
-from flask_login import login_user
+from flask_login import login_user, login_required, logout_user
 from flask import redirect
 from flask_login import LoginManager
 from data.jobs import Jobs
@@ -24,47 +25,19 @@ def load_user(user_id):
 
 @app.route("/")
 def index():
-    print("index")
-    return render_template('base.html', title='Заготовка')
-
-@app.route("/training/<prof>")
-def profession(prof):
-    print(prof)
-    return render_template("prof.html", prof=prof)
-
-@app.route("/list_prof/<list_type>")
-def show_list(list_type):
-    professions = ["инженер-исследователь", "пилот", "строитель", "экзобиолог", "врач",
-                   "инженер по терраформированию", "климатолог", "специалист по радиационной защите",
-                   "астрогеолог", "гляциолог", "инженер жизнеобеспечения", "метеоролог",
-                   "оператор марсохода", "киберинженер", "штурман", "пилот дронов"]
-    return render_template("show_list.html", list_type=list_type, professions=professions)
-
-@app.route("/answer")
-@app.route("/auto_answer")
-def answer():
-    inf = {
-        "title": "Анкета",
-        "name": "Mark",
-        "surname": "Watny",
-        "education": "выше среднего",
-        "profession": "штурман марсохода",
-        "sex": "male",
-        "motivation": "Всегда мечтал застрять на Марсе!",
-        "ready": True
-    }
-    return render_template("auto_answer.html", inf=inf, title=inf["title"])
+    db_sess = db_session.create_session()
+    jobs = db_sess.query(Jobs).all()
+    return render_template("jobs_show.html", jobs=jobs)
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     registration = False
-
     form = LoginForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.email == form.email.data).first()
-        if user and user.check_password(form.password.data) and User.login == form.login.data: # атрибуты для задачи
+        if user and user.check_password(form.password.data): # атрибуты для задачи
             login_user(user, remember=form.remember_me.data)
             return redirect("/")
         return render_template('login.html',
@@ -75,28 +48,29 @@ def login():
 @app.route("/registration", methods=["GET","POST"])
 def register():
     form = UserForm()
-    if form.validate_on_submit():
+    if request.method == "POST":
         db_sess = db_session.create_session()
-        user = User()
-        user.id = form.id.data
-        user.surname = form.surname.data
-        user.name = form.name.data
-        user.age = form.age.data
-        user.position = form.position.data
-        user.speciality = form.speciality.data
-        user.address = form.address.data
-        user.email = form.email.data
-        user.hashed_password = form.hashed_password.data
-        user.modified_date = form.modified_date.data
+        user = User(
+            id=form.id.data,
+            surname=form.surname.data,
+            name=form.name.data,
+            age=form.age.data,
+            position=form.position.data,
+            speciality=form.speciality.data,
+            address=form.address.data,
+            email=form.email.data,
+            modified_date=form.modified_date.data
+        )
+        user.set_password(form.hashed_password.data)
         db_sess.add(user)
         db_sess.commit()
         return redirect('/')
-    return render_template("registration.html", form=form)
+    return render_template("registration.html", form=form, title="Registration")
 
 @app.route('/addjob', methods=['GET', 'POST'])
 def jobs_add():
     form = JobsForm()
-    if form.validate_on_submit():
+    if request.method == "POST":
         db_sess = db_session.create_session()
         jobs = Jobs()
         jobs.job = form.job.data
@@ -106,15 +80,17 @@ def jobs_add():
         jobs.is_finished = form.is_finished.data
         db_sess.add(jobs)
         db_sess.commit()
-        for user in db_sess.query(User).all():
-            print(user.id, user.name, user.surname, "User")
-
-
         return redirect('/')
     return render_template("form_add.html", form=form, message="Submit", title="Adding a job")
 
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect("/")
+
 
 if __name__ == "__main__":
+    db_session.global_init("db/user.sqlite")
+    db_sess = db_session.create_session()
     app.run(port=8080, host="127.0.0.1")
-
-print("works")
