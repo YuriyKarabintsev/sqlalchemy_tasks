@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="../static/css/auto_answer.css">
+    <div><i>Фамилия:</i> {{inf["surname"]}}</div>
+    <div><i>Имя:</i> {{inf["name"]}}</div>
+    <div><i>Образование:</i> {{inf["education"]}}</div>
+    <div><i>Профессия:</i> {{inf["profession"]}}</div>
+    <div><i>Пол:</i> {{inf["sex"]}}</div>
+    <div><i>Мотивация:</i> {{inf["motivation"]}}</div>
+    <div><i>Готовы остаться на Марсе?</i> {{inf["ready"]}}</div>
+{% endblock %}
